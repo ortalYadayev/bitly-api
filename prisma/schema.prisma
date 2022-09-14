@@ -10,10 +10,10 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model exampleTable {
+model links {
     id Int @id @default(autoincrement())
-    id_student String @db.VarChar(9) @unique
-    institution String @db.VarChar(255)
-    immigration DateTime?
-    email String @db.VarChar(255)
+    createdAt DateTime @default(now())
+    expireAt DateTime
+    original_url String
+    short_url String?
 }
