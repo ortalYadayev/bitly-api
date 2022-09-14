@@ -1,8 +1,9 @@
-import shortenLinkService from "../services/shortLinkService";
+import shortLinkService from "../services/shortLinkService";
+import { Request , Response } from "express";
 
-const createShortLink = async (request: any, response: any, next: any) => {
+const createShortLink = async (request: Request, response: Response) => {
     const { url } = request.body;
-    const newUrl: { isUrl: boolean, message: string | null } = await shortenLinkService.createShortLink(url);
+    const newUrl: { isUrl: boolean, message: string | null } = await shortLinkService.createShortLink(url);
 
     if(!newUrl.isUrl) {
         return response.status(422).json({
@@ -10,7 +11,18 @@ const createShortLink = async (request: any, response: any, next: any) => {
         });
     }
 
-    response.status(201).json(newUrl.message);
+    response.status(201).json({
+        shortLink: newUrl.message
+    });
 };
 
-export default { createShortLink };
+const redirectLink = async (request: Request, response: Response) => {
+    const { url } = request.body;
+    const link: string | undefined = await shortLinkService.getOriginalLink(url);
+
+    response.status(200).json({
+        link: link ?? ''
+    });
+};
+
+export default { createShortLink, redirectLink };

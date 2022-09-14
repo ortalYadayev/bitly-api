@@ -5,7 +5,7 @@ import * as moment from "moment";
 const prisma = new PrismaClient();
 
 const isValidUrl = (urlString: string) : boolean => {
-    let urlPattern = new RegExp('^(https?:\\/\\/)?'+
+    const urlPattern = new RegExp('^(https?:\\/\\/)?'+
         '((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.)+[a-z]{2,}|'+
         '((\\d{1,3}\\.){3}\\d{1,3}))'+
         '(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*'+
@@ -15,42 +15,73 @@ const isValidUrl = (urlString: string) : boolean => {
 }
 
 class shortLinkService {
-    static async createShortLink (originaUrl: string) {
-        let isUrl: boolean = isValidUrl(originaUrl);
+    static async createShortLink(originalUrl: string) {
+        const isUrl: boolean = isValidUrl(originalUrl);
 
-        if(!isUrl) {
-            return { isUrl, message: 'Unable to shorten that link. It is not a valid url.'};
+        if (!isUrl) {
+            return {
+                isUrl,
+                message: 'Unable to shorten that link. It is not a valid url.'
+            };
         }
+
+        const indexHTTP = originalUrl.indexOf('://');
+
+        originalUrl = indexHTTP !== -1 ? originalUrl.substring(indexHTTP + 3) : originalUrl;
 
         const uid = new ShortUniqueId({
             length: 6
         });
 
-        const uniqueLink = await prisma.links.findMany({
+        const uniqueLink = await prisma.links.findFirst({
             where: {
-                original_url: originaUrl,
+                original_url: {
+                    contains: originalUrl
+                },
                 expireAt: {
                     gt: moment().format()
                 }
             }
         });
 
-        if(uniqueLink.length > 0) {
-            return { isUrl: false, message: 'Exist short link.'};
+        if (uniqueLink) {
+            return {
+                isUrl: false,
+                message: 'Exist short link.'
+            };
         }
 
         const shortUrl = "https://short.l/" + uid();
         const expireAt = moment().add(1, 'M').format();
 
-        const link = await  prisma.links.create({
+        const link = await prisma.links.create({
             data: {
                 expireAt,
-                original_url: originaUrl,
+                original_url: 'http://' + originalUrl,
                 short_url: shortUrl
             }
         })
 
-        return { isUrl: true, message: link.short_url };
+        return {
+            isUrl: true,
+            message: link.short_url
+        };
+    }
+
+    static async getOriginalLink(shortUrl: string) {
+        const indexHTTP = shortUrl.indexOf('://');
+
+        shortUrl = indexHTTP ! -1 ? shortUrl.substring(indexHTTP + 3) : shortUrl;
+
+        const originalLink = await prisma.links.findFirst({
+            where: {
+                short_url: {
+                    contains: shortUrl
+                },
+            }
+        })
+
+        return originalLink?.original_url;
     }
 }
 

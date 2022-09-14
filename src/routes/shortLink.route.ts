@@ -3,10 +3,10 @@ import shortLinkController from "../../controllers/shortLink.controller";
 
 const shortLinkRouter = express.Router();
 
-shortLinkRouter.route('/')
-    .get(shortLinkController.createShortLink);
+shortLinkRouter.route('/redirect-link')
+    .post(shortLinkController.redirectLink);
 
-shortLinkRouter.route('/shorten-link')
+shortLinkRouter.route('/short-link')
     .post(shortLinkController.createShortLink);
 
 export default shortLinkRouter;
