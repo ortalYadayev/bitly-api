@@ -71,13 +71,11 @@ class shortLinkService {
     static async getOriginalLink(shortUrl: string) {
         const indexHTTP = shortUrl.indexOf('://');
 
-        shortUrl = indexHTTP ! -1 ? shortUrl.substring(indexHTTP + 3) : shortUrl;
+        shortUrl = indexHTTP !== -1 ? shortUrl.substring(indexHTTP + 3) : shortUrl;
 
         const originalLink = await prisma.links.findFirst({
             where: {
-                short_url: {
-                    contains: shortUrl
-                },
+                short_url: `https://${shortUrl}`,
             }
         })
 
