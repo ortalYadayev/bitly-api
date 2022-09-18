@@ -51,20 +51,21 @@ class shortLinkService {
             };
         }
 
-        const shortUrl = "https://short.l/" + uid();
+        const shortUrl = process.env.APP_ENV === 'local' ? `${process.env.VITE_APP_URL}/${uid()}` : `https://short.l/${uid()}`;
+
         const expireAt = moment().add(1, 'M').format();
 
         const link = await prisma.links.create({
             data: {
                 expireAt,
                 original_url: 'http://' + originalUrl,
-                short_url: shortUrl
+                short_url: shortUrl,
             }
         })
 
         return {
             isUrl: true,
-            message: link.short_url
+            link
         };
     }
 
@@ -73,9 +74,11 @@ class shortLinkService {
 
         shortUrl = indexHTTP !== -1 ? shortUrl.substring(indexHTTP + 3) : shortUrl;
 
+        shortUrl = process.env.APP_ENV === 'local' ? `${process.env.VITE_APP_URL}/${shortUrl}` : `https://${shortUrl}`;
+
         const originalLink = await prisma.links.findFirst({
             where: {
-                short_url: `https://${shortUrl}`,
+                short_url: shortUrl,
             }
         })
 

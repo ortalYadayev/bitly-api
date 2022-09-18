@@ -2,19 +2,27 @@ import shortLinkService from "../services/shortLinkService";
 import { Request , Response } from "express";
 
 const createShortLink = async (request: Request, response: Response) => {
-    const { url } = request.body;
-    const newUrl: { isUrl: boolean, message: string | null } = await shortLinkService.createShortLink(url);
+    const { longLink } = request.body;
+    const newUrl: {
+        isUrl: boolean,
+        message?: string,
+        link?: any,
+    } = await shortLinkService.createShortLink(longLink);
 
-    if(!newUrl.isUrl) {
+    if (!newUrl.isUrl && newUrl?.message) {
         return response.status(422).json({
-            error: newUrl.message,
+            message: newUrl.message,
         });
     }
 
-    response.status(201).json({
-        shortLink: newUrl.message
-    });
-};
+    if (newUrl?.link)
+        return response.status(201).json({
+            shortLink: newUrl.link.short_url,
+            longLink: newUrl.link.original_url,
+        });
+
+    return response.status(201).json();
+}
 
 const redirectLink = async (request: Request, response: Response) => {
     const { url } = request.body;
